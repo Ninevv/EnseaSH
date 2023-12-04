@@ -19,34 +19,36 @@ int main(int argc, char **argv __attribute__((unused))) {
     char* exitstr = "exit";
 
     write(STDOUT_FILENO, outbuf, strlen(outbuf));
-    //read(STDIN_FILENO, inbuf, BUFSIZE);
-    //execlp("ls","ls",(char * )NULL);
 
     while(1){
         inlength = read(STDIN_FILENO, inbuf, BUFSIZE);
-        inbuf[inlength-1] = '\0';
-
-        /*char debug1[BUFSIZE];
-        sprintf(debug1,"length: %d\n", inlength);
-        write(STDOUT_FILENO, debug1, strlen(debug1));*/
+        inbuf[inlength-1] = '\0';//replaces the end of line symbol by end of string symbol
 
         if(strcmp(inbuf,exitstr)==0||inlength ==0){ // exit when the input is "exit" or if ctrl+D is pressed
-            sprintf(outbuf, "Bye bye, またね...\n");
+            sprintf(outbuf, "Bye bye...\n");
             write(STDOUT_FILENO, outbuf, strlen(outbuf));
             exit(status);
         }
         childPID = fork();
-        if(childPID == 0) { // child process
+        if(childPID == 0) {
             if ((status = execlp(inbuf, inbuf, (char *) NULL)) != 0) {
                 perror("execlp");
                 sprintf(outbuf, "status:%d\n", status);
                 write(STDOUT_FILENO, outbuf, strlen(outbuf));
+                exit(status);
             };
         }
-        else { //parent process
-            while((childtermination = waitpid(childPID,&terminatedstatus,waitpidoption)) ==0){};
-            sprintf(outbuf, "enseash%% ");
-            write(STDOUT_FILENO, outbuf, strlen(outbuf));
+        else {
+        	while((childtermination = waitpid(childPID,&terminatedstatus,waitpidoption)) ==0){};
+        	if(WIFEXITED(terminatedstatus)){
+                sprintf(outbuf, "enseash [exit:%d] %% ", WEXITSTATUS(terminatedstatus));
+            }
+            else{if(WIFSIGNALED(terminatedstatus)){
+                    sprintf(outbuf, "enseash [sign:%d] %% ", WTERMSIG(terminatedstatus));
+            }else{
+
+            }}
+        	write(STDOUT_FILENO, outbuf, strlen(outbuf));
         }
     }
     return status;
