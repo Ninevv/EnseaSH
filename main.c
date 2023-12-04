@@ -10,13 +10,13 @@
 int main(int argc, char **argv __attribute__((unused))) {
     char outbuf[] = "Welcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash% "; //
     char inbuf[BUFSIZE];
-    char res[BUFSIZE];
     int status ;
     ssize_t inlength;
     pid_t childPID;
     pid_t childtermination;
-    char* terminatedstatus;
-    const int witpidoption = 0;
+    int terminatedstatus;
+    const int waitpidoption = 0;
+    char* exitstr = "exit";
 
     write(STDOUT_FILENO, outbuf, strlen(outbuf));
     //read(STDIN_FILENO, inbuf, BUFSIZE);
@@ -30,6 +30,11 @@ int main(int argc, char **argv __attribute__((unused))) {
         sprintf(debug1,"length: %d\n", inlength);
         write(STDOUT_FILENO, debug1, strlen(debug1));*/
 
+        if(strcmp(inbuf,exitstr)==0||inlength ==0){ // exit when the input is "exit" or if ctrl+D is pressed
+            sprintf(outbuf, "Bye bye, またね...\n");
+            write(STDOUT_FILENO, outbuf, strlen(outbuf));
+            exit(status);
+        }
         childPID = fork();
         if(childPID == 0) { // child process
             if ((status = execlp(inbuf, inbuf, (char *) NULL)) != 0) {
@@ -39,12 +44,12 @@ int main(int argc, char **argv __attribute__((unused))) {
             };
         }
         else { //parent process
-            while((childtermination = waitpid(childPID,terminatedstatus,witpidoption)) ==0){};
+            while((childtermination = waitpid(childPID,&terminatedstatus,waitpidoption)) ==0){};
             sprintf(outbuf, "enseash%% ");
             write(STDOUT_FILENO, outbuf, strlen(outbuf));
         }
     }
-    return 0;
+    return status;
 }
 
 
